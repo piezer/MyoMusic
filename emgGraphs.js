@@ -48,12 +48,6 @@ Myo.on('connected', function(){
 		updateGraph(rawData);
 	}, 500)
 
-	MIDI.loadPlugin({
-		instrument: "acoustic_grand_piano", // or the instrument code 1 (aka the default)
-		onsuccess: function() { 
-			MIDI.setVolume(0, 127);
-			MIDI.noteOn(0,50,127,0);	}	
-		})
 	
 })
 
@@ -89,6 +83,16 @@ Array.apply(null, Array(resolution)).map(Number.prototype.valueOf,0)
 
 $(document).ready(function(){
 
+	MIDI.loadPlugin({
+		soundfontUrl: "./MusyngKite/",
+		instruments: ["kalimba","harpsichord"], // or the instrument code 1 (aka the default)
+		onsuccess: function() { 
+			MIDI.programChange(0,MIDI.GM.byName["harpsichord"].number)
+			MIDI.programChange(1,MIDI.GM.byName["kalimba"].number)
+			MIDI.setVolume(0, 127);
+			MIDI.noteOn(0,50,127,0);	}	
+		})
+
 	emgGraphs = graphData.map(function(podData, podIndex){
 		return $('#pod' + podIndex).plot(formatFlotData(podData), {
 			colors: ['#8aceb5'],
@@ -108,6 +112,8 @@ $(document).ready(function(){
 		}).data("plot");
 	});
 
+	ko.applyBindings(new ViewModel());
+	
 });
 
 var formatFlotData = function(data){
@@ -125,8 +131,10 @@ var updateGraph = function(emgData){
 
 		emgGraphs[index].setData(formatFlotData(graphData[index]));
 		emgGraphs[index].draw();
-		for (var i = 0; i < 8  && !atRest; i+= 3)
-			MIDI.noteOn(0, masterScales[$('#ddl').val()].scaleData[(128 + rawData[i]) % masterScales[$('#ddl').val()].scaleData.length - 1],127,0);
+		for (var i = 0; i < 8  && !atRest; i+= 3){
+			MIDI.noteOn(1, masterScales[$('#ddl').val()].scaleData[(128 + rawData[i]) % (masterScales[$('#ddl').val()].scaleData.length - 1)],127,0);
+			MIDI.noteOn(0, masterScales[$('#ddl').val()].scaleData[(128 + rawData[i+1]) % (masterScales[$('#ddl').val()].scaleData.length - 1)],127,0);
+		}
 	})
 
 }
